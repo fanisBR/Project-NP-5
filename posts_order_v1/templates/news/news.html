@@ -1,0 +1,94 @@
+{% extends 'default.html' %}
+{% load custom_filters %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Посты</h1>
+    
+    <a href="{% url 'home' %}" class="btn btn-outline-primary my-3">Вернуться на главную</a>
+    {% if request.user.is_authenticated and request.user|has_group:"authors"%}
+        <a href="{% url 'post_create' %}" class="btn btn-outline-primary my-3">Создать пост</a>
+    {% elif not request.user.is_authenticated %}
+        <a href="/accounts/" class="btn btn-outline-primary my-3">
+            Требуется авторизация, чтобы создать пост
+        </a>
+    {% else %}
+        <a href="/accounts/" class="btn btn-outline-primary my-3">
+            Нужно быть автором, чтобы создать пост
+        </a>
+    {% endif %}
+
+    <div class="row">
+        {% for post in page_obj %}
+            <div class="col-md-12 mb-4">
+                <div class="card">
+                    <div class="card-body ">
+                        <h5 class="card-title">{{ post.title|censor }}</h5>
+                        <p class="card-text">{{ post.text|truncatechars:51|censor }}</p>
+                        <a href="{% url 'post_detail' post.id %}" class="btn btn-primary">Подробно</a>
+                        {% if post.author.author == request.user %}
+                            <a href="{% url 'post_edit' post.id %}" class="btn btn-success">Редактировать</a>
+                            <a href="{% url 'post_delete' post.id %}" class="btn btn-danger">Удалить</a>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer text-muted">
+                        {{ post.dateCreation|date:"d-M-Y H:i" }}
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <p>Нет новостей для отображения.</p>
+        {% endfor %}
+    </div>
+
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1" aria-label="Первая">
+                        <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Назад">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">&laquo;&laquo;</span></li>
+                <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+            {% endif %}
+      
+            {% for num in page_obj.paginator.page_range %}
+                {% if num == 1 or num == page_obj.paginator.num_pages %}
+                    <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                {% elif num > page_obj.number|add:'-2' and num < page_obj.number|add:'2' %}
+                    <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                {% elif num == page_obj.number|add:'-2' or num == page_obj.number|add:'2' %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+      
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Вперёд">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Последняя">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                <li class="page-item disabled"><span class="page-link">&raquo;&raquo;</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+        
+</div>
+{% endblock %}

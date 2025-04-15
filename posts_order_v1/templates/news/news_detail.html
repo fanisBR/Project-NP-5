@@ -1,0 +1,85 @@
+{% extends 'default.html' %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>{{ post.title|censor }}</h1>
+    <div class="row col-2">
+        {% if post.author.author == request.user %}
+            <a href="{% url 'post_edit' post.id %}" class="btn btn-success mb-2">Редактировать</a>
+            <a href="{% url 'post_delete' post.id %}" class="btn btn-danger mb-2">Удалить</a>
+        {% endif %}
+    </div>
+    <h5 class="text-muted">Автор: {{ post.author.username }}</h5>
+    <p class="text-muted">Опубликовано: {{ post.dateCreation|date:"d-M-Y H:i" }}</p>
+    <!--
+        Если требуется изображение
+        <div class="mb-4">
+            <img src="https://static.thenounproject.com/png/4595376-200.png" class="d-block mx-auto" alt="{{ post.title }}">
+        </div>
+     -->
+     <p class="text-muted">
+        Тип: 
+        {% if post.CategoryType == 'NW' %}
+            <span class="badge bg-primary">Новость</span>
+        {% elif post.CategoryType == 'AR' %}
+            <span class="badge bg-secondary">Статья</span>
+        {% endif %}
+    </p>
+
+    <p class="text-muted">
+        Категория(и): 
+        <div class="d-flex flex-column">
+            {% for category in post.categories.all %}
+                <div class="d-flex align-items-center mb-2">
+                    <span class="badge bg-info me-2">{{ category.name }}</span>
+                    {% if request.user in category.subscribers.all %}
+                        <a class="btn btn-danger btn-sm" href="{% url 'subscribe_to_category' category.id %}">Отписаться от категории</a>
+                    {% else %}
+                        <a class="btn btn-warning btn-sm" href="{% url 'subscribe_to_category' category.id %}">Подписаться на категорию</a>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </p>
+
+    <p>{{ post.text|censor }}</p>
+
+    <div class="mt-4">
+        <!-- Доп. логика для оценки (если требуется) -->
+        <h5>Рейтинг: {{ post.rating }}</h5>
+        <button class="btn btn-success" onclick="" disabled>Нравится</button>
+        <button class="btn btn-danger" onclick="" disabled>Не нравится</button>
+    </div>
+
+    <div class="mt-4">
+        <h6>Комментарии</h6>
+        {% if comments %}
+            <ul class="list-unstyled">
+                {% for comment in comments %}
+                    <li class="border-bottom py-2">
+                        <strong>{{ comment.commentUser.username }}</strong> 
+                        <span class="text-muted">{{ comment.dateCreation|date:"d-M-Y H:i" }}</span>
+                        <p>{{ comment.text|censor }}</p>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Комментариев пока нет.</p>
+        {% endif %}
+    </div>
+
+    <div class="mt-4">
+        <h6>Добавить комментарий</h6>
+        <form method="post">
+            {% csrf_token %}
+            <textarea class="form-control" name="comment_text" rows="3" placeholder="Оставьте ваш комментарий..." disabled></textarea>
+
+            <button type="submit" class="btn btn-primary mt-2" disabled>Отправить</button>
+            <div class="mt-2">
+                <a href="javascript:history.back()" class="btn btn-danger">Назад</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
